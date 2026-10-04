@@ -11,3 +11,7 @@ def load_data():
 def name():
     return {'message': 'Patient Management System API'}
 
+@app.get("/about")
+def about():
+    return {'message':'Fully Fuctional Patient Management System API'}
+
