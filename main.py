@@ -15,3 +15,7 @@ def name():
 def about():
     return {'message':'Fully Fuctional Patient Management System API'}
 
+@app.get('/view')
+def view():
+    data = load_data()
+    return data
