@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Path, HTTPException, Query
 from pydantic import BaseModel,Field, computed_field
 from fastapi.responses import JSONResponse
-from typing import Annotated,Literal
+from typing import Annotated,Literal,Optional
 import json
 app = FastAPI()
 
@@ -33,7 +33,12 @@ class Patient(BaseModel):
          else :
              return 'obese'
    
-
+class Patient_Update(BaseModel):
+     name : Annotated[Optional[str], Field( description="Name Of the Patient ")] = None
+     city: Annotated[Optional[str], Field( description="The city where Patient is living ")]= None
+     age: Annotated[Optional[int], Field( description= "Age of the Patient", gt=0, lt=120)]= None
+     height : Annotated[Optional[float], Field( description= "Height of the Patient in meter", gt=0)]= None
+     weight : Annotated[Optional[float], Field( description= "weight of the Patient in kg", gt=0)]= None
 def load_data():
     with open('patient.json', 'r') as f:
         data = json.load(f)
@@ -99,5 +104,26 @@ def create_patient( patient : Patient):
     save_data(data)
 
     return JSONResponse(status_code=201, content={'message':'Patient Created Sucessfully'})
+@app.put('/update/{patient_id}')
+def update_patient(patient_id : str, patient_update: Patient_Update):
+    data = load_data()
+    if patient_id not in data :
+        raise HTTPException(status_code= 404, detail="Patient Not Found")
+    existing_info = data[patient_id]
+    updated_info = patient_update.model_dump(exclude_unset=True)
+    for key, value in updated_info.items():
+        existing_info[key] = value
+
+    # exting info -> pydantic object -> because we want -> updated bmi + verdict
+    existing_info['id']= patient_id   # adding id, Because Patient Model required id .
+    existing_patient_object = Patient(**existing_info)
+
+    # existing_patient_objec -> dict
+    existing_info = existing_patient_object.model_dump(exclude='id')
+
+    data[patient_id]= existing_info  
+    save_data(data)
+    return JSONResponse(status_code=200, content={'message':'Patient Updated Successfully'})  
+
 
 
